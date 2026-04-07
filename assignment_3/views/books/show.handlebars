@@ -1,0 +1,64 @@
+<h1>{{book.title}}</h1>
+{{#if authors}}
+<p>
+  Written by {{#each authors}}{{this.firstName}} {{this.lastName}}{{#unless @last}}, {{/unless}}{{/each}}
+</p>
+{{/if}}
+<p>
+  Originally published in {{book.publishingYear}}
+</p>
+{{#if genre}}
+<p>
+  genre: {{genre.genre}}
+</p>
+{{/if}}
+{{#if currentUser}}
+<div>
+  <form action="/books_users/upsert" role="form" method="post">
+    <input type="hidden" name="_csrf" value="{{_csrfToken}}">
+    <input type="hidden" name="bookId" value="{{bookId}}">
+    <input type="hidden" name="userEmail" value="{{currentUser.email}}">
+    <label for="status">Status</label>
+    <select name="status" id="status">
+      {{#unless (and bookUser bookUser.status)}}
+        <option disabled selected value>-- select status --</option>
+      {{/unless}}
+      {{#each statuses}}
+        <option value="{{this}}" {{#if (and @root.bookUser (eq @root.bookUser.status this))}}selected{{/if}}>{{this}}</option>
+      {{/each}}
+    </select>
+    <button type="submit">Submit</button>
+  </form>
+</div>
+{{/if}}
+
+<h2>Comments</h2>
+
+{{#if currentUser}} 
+{{!-- Checks to see if user if logged in using the currentUser variable passed in from the route handler.
+If there is a user logged in, it will show the form to add a new comment. --}}
+<div>
+  <form action="/comments/upsert" role="form" method="post">
+    <input type="hidden" name="_csrf" value="{{_csrfToken}}">
+    <input type="hidden" name="bookId" value="{{bookId}}">
+    <input type="hidden" name="userEmail" value="{{currentUser.email}}">
+    <textarea name="text" id="text"></textarea>
+    <br>
+    <button type="submit">New comment</button>
+  </form>
+{{/if}}
+
+{{#each comments}}
+  <div>
+    <p>{{this.text}}</p>
+    <p style="margin-top:-16px; color: gray;">By {{this.userEmail}}</p>
+    {{#if (eq @root.currentUser.email  this.userEmail)}}
+    {{!-- Checks if the current user is the same user who has the email tied to this comment --}}
+    <a href="/comments/edit?id={{this.id}}">Edit</a>
+    {{!-- uses a dynamic route to handle editing the comment. The id property comes from the comment object --}}
+    {{/if}}
+  </div>
+ {{else}} 
+  <p>No comments yet</p>
+{{/each}}
+
